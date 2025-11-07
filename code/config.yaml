@@ -1,0 +1,14 @@
+ModelScope:
+  API_KEY: "ms-8871e480-aca4-4b53-8fb4-f5ff8d3a3d27"
+  BASE_URL: "https://api-inference.modelscope.cn/v1"
+  MODEL_NAME: "Qwen/QwQ-32B"
+  # MODEL_NAME: "MiniMax/MiniMax-M2"
+
+OpenAI:
+  BASE_URL: "https://api.chatanywhere.tech/v1"
+  MODEL_NAME: "gpt-4o-mini"
+  # MODEL_NAME: "gpt-3.5-turbo"
+  API_KEY: 'sk-xWiMn1qRUxRS2S5yiBV0cMmrLcOOGuZeimwUmZlDNJCKP4nB'
+
+TAVILY:
+  API_KEY: "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"
