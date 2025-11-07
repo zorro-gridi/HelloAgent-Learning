@@ -10,7 +10,8 @@ from openai import OpenAI
 from pathlib import Path
 current_dir = Path(__file__).parent
 
-with open(current_dir.parent / 'config.yaml', 'r') as f:
+# 读取配置文件
+with open(current_dir.parent.parent.parent / 'config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
 # %%
@@ -26,7 +27,8 @@ AGENT_SYSTEM_PROMPT = """
 Thought: [这里是你的思考过程和下一步计划]
 Action: [这里是你要调用的工具，格式为 function_name(arg_name="arg_value")]
 
-* 强烈要求：为节省输出时间，你需要一步步思考，每次回复输出一对 Thought-Action 后，即停止输出，避免过度思考，例如：
+* 强烈要求：你需要一步一步思考，每次回复仅输出一对 Thought-Action，避免过度思考。
+* 输出示例，以下为一对 Thought-Action，输出后，即停止输出
 Thought: 已获取北京天气为小雨和雾，气温11℃。需要调用get_attraction根据天气推荐适合的景点。
 Action: get_attraction(city="北京", weather="Light rain, mist")
 
