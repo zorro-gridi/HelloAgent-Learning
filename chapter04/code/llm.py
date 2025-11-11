@@ -52,9 +52,15 @@ class HelloAgentsLLM:
             collected_content = []
 
             for chunk in response:
-                content = chunk.choices[0].delta.content or ""
-                print(content, end="", flush=True)
-                collected_content.append(content)
+                # 安全地获取content
+                if (chunk.choices and
+                    len(chunk.choices) > 0 and
+                    chunk.choices[0].delta.content is not None
+                    ):
+                    content = chunk.choices[0].delta.content or ""
+
+                    print(content, end="", flush=True)
+                    collected_content.append(content)
 
             print()  # 在流式输出结束后换行
             return "".join(collected_content)

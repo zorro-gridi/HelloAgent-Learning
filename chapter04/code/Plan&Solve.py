@@ -1,6 +1,9 @@
 from llm import HelloAgentsLLM
 from tool import ToolExecutor
 
+import sys
+import re
+import subprocess
 import ast
 
 
@@ -72,6 +75,15 @@ EXECUTOR_PROMPT_TEMPLATE = """
 
 # 当前步骤:
 {current_step}
+
+你应该**优先尝试编写 Python 函数**，并通过函数调用解决问题，特别是对于数理、计数等逻辑问题。
+- 函数设计**必须包含完整的函数签名、文档字符串，并遵循PEP 8编码规范**。
+- 当你使用 Python 函数调用解决问题时，你的输出是一段 Python 代码，要求 print 函数调用结果。输出格式如下：
+```python
+你的代码
+```
+
+- 当你能够直接回答问题时，请直接范围答案文本
 
 请仅输出针对“当前步骤”的回答:
 """
@@ -153,6 +165,23 @@ class Executor:
 
             messages = [{"role": "user", "content": prompt}]
             response_text = self.llm_client.think(messages=messages) or ""
+
+            if '```python' in response_text:
+                print(f'🧮 该问题优先使用编程解决')
+                # 匹配 ```python 开头，``` 结尾的代码块
+                pattern = r'```python(.*?)```'
+                matches = re.findall(pattern, response_text, re.DOTALL)
+
+                # 清理每段代码（去除前后空白）
+                code_blocks = [match.strip() for match in matches]
+                # 将代码保存到临时文件执行
+                with open('temp_code.py', 'w', encoding='utf-8') as f:
+                    f.write(code_blocks[0])
+
+                # 执行并捕获输出
+                result = subprocess.run([sys.executable, 'temp_code.py'],
+                                    capture_output=True, text=True, timeout=30)
+                response_text = result.stdout.strip()
 
             # 更新历史记录，为下一步做准备
             history += f"步骤 {i+1}: {step}\n结果: {response_text}\n\n"
