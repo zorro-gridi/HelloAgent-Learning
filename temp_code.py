@@ -1,14 +1,5 @@
-def calculate_total_cost(attendances, price_per_attendance):
-    """Calculate the total cost based on the number of attendances and price per attendance.
-    
-    Args:
-        attendances (int): Number of times attended.
-        price_per_attendance (int or float): Cost per attendance.
-    
-    Returns:
-        float: Total cost.
-    """
-    return attendances * price_per_attendance
+def calculate_total_cost(days, cost_per_session):
+    """Calculate the total cost based on the number of swimming days and cost per session."""
+    return days * cost_per_session
 
-total_cost = calculate_total_cost(12, 40)
-print(total_cost)
+print(calculate_total_cost(12, 40))

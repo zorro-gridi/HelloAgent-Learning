@@ -64,6 +64,8 @@ EXECUTOR_PROMPT_TEMPLATE = """
 你将收到原始问题、完整的计划、以及到目前为止已经完成的步骤和结果。
 请你专注于解决“当前步骤”，并仅输出该步骤的最终答案，不要输出任何额外的解释或对话。
 
+- 任务的拆解要保持精炼，粒度不要过于细碎，同类型的子任务可以合并，从而保证子任务的结构紧凑，求解高效
+
 # 原始问题:
 {question}
 
@@ -76,69 +78,16 @@ EXECUTOR_PROMPT_TEMPLATE = """
 # 当前步骤:
 {current_step}
 
-你应该**优先尝试编写 Python 函数**，并通过函数调用解决问题，特别是对于数理、计数等逻辑问题。
-- 函数设计**必须包含完整的函数签名、文档字符串，并遵循PEP 8编码规范**。
+你应该**优先尝试编写 Python 函数**，并通过**函数调用**解决问题，特别是对于数理、计数等逻辑问题。
+- 程序设计**必须包含完整的函数签名、文档字符串，并遵循PEP 8编码规范**，还要注意审核代码是否有逻辑错误。
 - 当你使用 Python 函数调用解决问题时，你的输出是一段 Python 代码，要求 print 函数调用结果。输出格式如下：
 ```python
 你的代码
 ```
-
-- 当你能够直接回答问题时，请直接范围答案文本
+- 当不需要函数调用，能够直接回答问题时，则直接给出答案。
 
 请仅输出针对“当前步骤”的回答:
 """
-
-import calendar
-from datetime import date, timedelta
-from typing import List
-
-
-class Calendar:
-    def get_month_days(self, year: int, month: int):
-        '''
-        Desc:
-            获取某年某月一共有多少天
-        Args:
-            year: int, 年份
-            month: int, 月份
-        Returns:
-            int: 该月的天数
-        '''
-        # 使用calendar模块的monthrange函数获取该月的天数
-        # monthrange返回一个元组 (该月第一天的星期, 该月的天数)
-        days = calendar.monthrange(year, month)[1]
-        return f'{days}天'
-
-
-    def get_month_weekdays(self, year: int, month: int, weekdays: List[str]):
-        '''
-        Desc:
-            获取某年某月中有多少个weekdays
-        Args:
-            year: 年份
-            month: 月份
-            weekdays: 可选参数 ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
-        Returns:
-            int: 指定星期几在该月中出现的次数
-        '''
-        weekday_map = {
-            "周一": 0, "周二": 1, "周三": 2, "周四": 3,
-            "周五": 4, "周六": 5, "周日": 6
-        }
-
-        target_weekdays = [weekday_map[wd] for wd in weekdays]
-
-        # 获取该月的天数
-        month_days = self.get_month_days(year, month)
-
-        count = 0
-        # 只需要遍历天数，计算每个日期对应的星期几
-        for day in range(1, month_days + 1):
-            current_date = date(year, month, day)
-            if current_date.weekday() in target_weekdays:
-                count += 1
-
-        return f'{count}次'
 
 
 class Executor:
@@ -183,7 +132,7 @@ class Executor:
                                     capture_output=True, text=True, timeout=30)
                 response_text = result.stdout.strip()
 
-            # 更新历史记录，为下一步做准备
+            # NOTE: 更新历史记录，为下一步做准备
             history += f"步骤 {i+1}: {step}\n结果: {response_text}\n\n"
             print(f"✅ 步骤 {i+1} 已完成，结果: {response_text}")
 
@@ -224,9 +173,6 @@ class PlanAndSolveAgent:
 if __name__ == '__main__':
     llm_client = HelloAgentsLLM(Provider='ModelScope')
     tool_executor = ToolExecutor()
-
-    tool_executor.registerTool('计算月份的天数', '返回指定*年*月一共有多少个自然日', Calendar().get_month_days)
-    tool_executor.registerTool('计算月份中指定星期的天数', '返回指定*年*月中指定的星期有多少个自然日', Calendar().get_month_weekdays)
 
     plan_solve_agent = PlanAndSolveAgent(llm_client)
     plan_solve_agent.run('Zorro每周一、三、五游泳，游泳馆的票价为40元/次，请问在2025年11月份，Zorro游泳一共需要花多少钱？')
