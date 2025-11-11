@@ -46,6 +46,7 @@ class HelloAgentsLLM:
                 temperature=temperature,
                 stream=True,
             )
+            # print(response)
             # 处理流式响应
             print("✅ 大语言模型响应成功:")
             collected_content = []
