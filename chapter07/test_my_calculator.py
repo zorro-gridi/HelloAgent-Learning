@@ -2,8 +2,21 @@
 from dotenv import load_dotenv
 from my_calculator_tool import create_calculator_registry
 
+import os
+import yaml
+from pathlib import Path
+current_dir = Path(__file__).parent
+
+# 读取配置文件
+with open(current_dir.parent.parent / 'config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+
+Provider = 'ModelScope'
+
+
 # 加载环境变量
-load_dotenv()
+# load_dotenv(current_dir.parent.parent / '.env')
+
 
 def test_calculator_tool():
     """测试自定义计算器工具"""
@@ -32,7 +45,11 @@ def test_with_simple_agent():
     from hello_agents import HelloAgentsLLM
 
     # 创建LLM客户端
-    llm = HelloAgentsLLM()
+    llm = HelloAgentsLLM(
+        base_url=config[Provider]["BASE_URL"],
+        api_key=config[Provider]["API_KEY"],
+        model=config[Provider]["MODEL_NAME"],
+        )
 
     # 创建包含计算器的注册表
     registry = create_calculator_registry()
