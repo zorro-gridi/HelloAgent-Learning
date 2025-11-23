@@ -1,0 +1,134 @@
+**ProjectTreeGenerator.create_from_tree_structure** 的功能源码实现逻辑：
+**ProjectTreeGenerator.create_from_tree_structure** 的源码：
+```python
+    def create_from_tree_structure(self, tree_text, base_path="."):
+        """
+        自动创建目录树
+        """
+        tree = self.parse_directory_tree(tree_text)
+
+        if not tree:
+            print("解析的树结构为空")
+            return
+
+        root_name = list(tree.keys())[0]
+        root_path = os.path.join(base_path, root_name)
+
+        # 创建根目录
+        os.makedirs(root_path, exist_ok=True)
+        print(f"创建根目录: {root_path}")
+
+        # 递归创建子目录和文件
+        self._create_structure(tree[root_name], root_path)
+        print("目录树创建完成！")
+```
+
+**所有依赖（去重后）：**
+
+**依赖的utils.py:ProjectTreeGenerator.parse_directory_tree** 的源码：
+```python
+    def parse_directory_tree(self, tree_text):
+        """
+        Desc:
+            解析目录树
+        """
+        lines = tree_text.strip().split('\n')
+        if not lines:
+            return {}
+
+        root = {}
+        stack = [(root, -1)]  # (current_dict, indent_level)，初始缩进设为-1
+
+        # 处理根目录
+        first_line = lines[0].strip()
+        # 移除根目录的斜杠（如果有）
+        root_name = first_line.rstrip('/')
+        root[root_name] = {}
+        stack.append((root[root_name], 0))
+
+        for line in lines[1:]:  # 从第二行开始处理
+            # 计算缩进级别
+            original_line = line
+            leading_spaces = len(line) - len(line.lstrip(' '))
+            indent = leading_spaces // 4  # 假设每个缩进级别是4个空格
+            line = line[leading_spaces:]
+
+            # 清理行内容
+            line = line.strip()
+            if not line:
+                continue
+
+            # 提取名称并判断类型
+            if '├──' in line:
+                name = line.split('├──', 1)[1].strip()
+            elif '└──' in line:
+                name = line.split('└──', 1)[1].strip()
+            else:
+                name = line.strip()
+
+            # 修复：正确判断是否为目录
+            # 目录特征：以斜杠结尾，或者后面有子节点（通过缩进判断）
+            is_dir = name.endswith('/')
+            if is_dir:
+                name = name.rstrip('/')
+
+            # 调整栈到正确的缩进级别
+            while len(stack) > 1 and stack[-1][1] >= indent:
+                stack.pop()
+
+            if len(stack) == 0:
+                continue  # 栈为空，跳过此行
+
+            current_dict, _ = stack[-1]
+
+            if is_dir:
+                new_dir = {}
+                current_dict[name] = new_dir
+                stack.append((new_dir, indent))
+            else:
+                # 文件节点设置为空字符串
+                current_dict[name] = ""
+
+        return root
+```
+
+**依赖的utils.py:ProjectTreeGenerator._create_structure** 的源码：
+```python
+    def _create_structure(self, tree, current_path):
+        """
+        递归创建目录和文件结构
+
+        Args:
+            tree: 树状结构字典，文件节点的值为字符串内容
+            current_path: 当前基础路径
+        """
+        for name, content in tree.items():
+            path = os.path.join(current_path, name)
+
+            if isinstance(content, dict):
+                # 这是目录节点
+                print(f"创建目录: {path}")
+                os.makedirs(path, exist_ok=True)
+                self._create_structure(content, path)
+            else:
+                # 这是文件节点
+                # 确保父目录存在
+                parent_dir = os.path.dirname(path)
+                if parent_dir and not os.path.exists(parent_dir):
+                    os.makedirs(parent_dir, exist_ok=True)
+
+                # 检查路径是否已存在且为目录
+                if os.path.exists(path) and os.path.isdir(path):
+                    print(f"警告: 期望创建文件但路径已是目录: {path}")
+                    continue
+
+                # 写入文件内容
+                file_content = content if content is not None else ""
+                print(f"创建文件: {path}")
+                try:
+                    with open(path, 'w', encoding='utf-8') as f:
+                        f.write(file_content)
+                except Exception as e:
+                    print(f"创建文件失败 {path}: {e}")
+```
+

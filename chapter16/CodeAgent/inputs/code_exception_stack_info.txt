@@ -1,0 +1,15 @@
+异常信息：TypeError: write() argument must be str, not None
+异常堆栈-1:
+    - 代码文件：/Users/zorro/Documents/成长笔记/Agent开发/CodeAgent/utils/utils.py
+    - 代码类型：用户程序
+    - 异常代码：generator.create_from_tree_structure(tree_text)
+
+异常堆栈-2:
+    - 代码文件：/Users/zorro/Documents/成长笔记/Agent开发/CodeAgent/utils/utils.py
+    - 代码类型：用户程序
+    - 异常代码：self._create_structure(tree[root_name], root_path)
+
+异常堆栈-3:
+    - 代码文件：/Users/zorro/Documents/成长笔记/Agent开发/CodeAgent/utils/utils.py
+    - 代码类型：用户程序
+    - 异常代码：f.write(content)

@@ -1,0 +1,102 @@
+**ProjectTreeGenerator.create_from_tree_structure** 的功能源码实现逻辑：
+**ProjectTreeGenerator.create_from_tree_structure** 的源码：
+```python
+    def create_from_tree_structure(self, tree_text, base_path="."):
+        """
+        自动创建目录树
+        """
+        tree = self.parse_directory_tree(tree_text)
+
+        if not tree:
+            print("解析的树结构为空")
+            return
+
+        root_name = list(tree.keys())[0]
+        root_path = os.path.join(base_path, root_name)
+
+        # 创建根目录
+        os.makedirs(root_path, exist_ok=True)
+
+        # 递归创建子目录和文件
+        self._create_structure(tree[root_name], root_path)
+```
+
+**所有依赖（去重后）：**
+
+**依赖的utils.py:ProjectTreeGenerator.parse_directory_tree** 的源码：
+```python
+    def parse_directory_tree(self, tree_text):
+        """
+        Desc:
+            解析目录树
+        """
+        lines = tree_text.strip().split('\n')
+        if not lines:
+            return {}
+
+        root = {}
+        stack = [(root, -1)]  # (current_dict, indent_level)，初始缩进设为-1
+
+        # 处理根目录
+        first_line = lines[0].strip()
+        root[first_line] = {}
+        stack.append((root[first_line], 0))
+
+        for line in lines[1:]:  # 从第二行开始处理
+            # 计算缩进级别
+            indent = 0
+            original_line = line
+            while line.startswith('    '):
+                indent += 1
+                line = line[4:]
+
+            # 清理行内容
+            line = line.strip()
+            if not line:
+                continue
+
+            # 提取名称并判断类型
+            if '├──' in line:
+                name = line.split('├──', 1)[1].strip()
+            elif '└──' in line:
+                name = line.split('└──', 1)[1].strip()
+            else:
+                name = line.strip()
+
+            is_dir = '└──' in original_line or '├──' in original_line
+
+            # 调整栈到正确的缩进级别
+            while len(stack) > 1 and stack[-1][1] >= indent:
+                stack.pop()
+
+            if len(stack) == 0:
+                continue  # 栈为空，跳过此行
+
+            current_dict, _ = stack[-1]
+
+            if is_dir:
+                new_dir = {}
+                current_dict[name] = new_dir
+                stack.append((new_dir, indent))
+            else:
+                current_dict[name] = None
+
+        return root
+```
+
+**依赖的utils.py:ProjectTreeGenerator._create_structure** 的源码：
+```python
+    def _create_structure(self, structure, current_path):
+        """递归创建目录结构"""
+        for name, content in structure.items():
+            path = os.path.join(current_path, name)
+            if content is not None:  # 是目录
+                os.makedirs(path, exist_ok=True)
+                self._create_structure(content, path)
+            else:  # 是文件
+                # 确保父目录存在
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, 'w') as f:
+                    f.write('# Created by auto-generator\n')
+```
+
